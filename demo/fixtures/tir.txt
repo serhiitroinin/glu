@@ -1,0 +1,24 @@
+TIR Analysis — Last 12 hours (graph)
+
+Readings:  144
+
+── Glucose ──────────────────────────
+  Mean:    127 mg/dL (7.1 mmol/L)
+  SD:      24.6 mg/dL
+  CV:      19.4% ✓
+  Min:     78 mg/dL  Max: 168 mg/dL
+  GMI:     6.1%
+
+── Time in Range ────────────────────
+  Very Low  (<54):     0%   (0/144) ✓
+  Low       (54-69):   0%   (0/144)
+  TBR total (<70):     0%   ✓
+  In Range  (70-180):  95.1%  (137/144) ✓
+  High      (181-250): 4.9%   (7/144)
+  Very High (>250):    0%     (0/144)
+
+── Targets (consensus 2019) ─────────
+  TIR ≥80%:  ✓ PASS
+  TBR <5%:   ✓ PASS
+  CV <33%:   ✓ PASS
+  GMI <6.8%: ✓ PASS

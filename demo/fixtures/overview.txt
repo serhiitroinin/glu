@@ -1,0 +1,9 @@
+Glu Overview
+
+Current
+  118 mg/dL (6.6 mmol/L) →  [IN RANGE]  at 2026-05-10T08:14:00
+
+TIR (12h)
+  Readings: 144 | Mean: 127 mg/dL | SD: 24.6 | CV: 19.4%
+  TIR: 95.1% ✓ | TBR: 0.0% ✓ | TAR: 4.9%
+  GMI: 6.1% | Range: 78–168 mg/dL

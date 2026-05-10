@@ -4,6 +4,8 @@ A terminal CLI for reading **FreeStyle Libre 3** continuous glucose monitor (CGM
 
 Outputs glucose readings, time-in-range analysis, CV, GMI, and consensus clinical targets — all from your shell.
 
+![demo](demo/demo.gif)
+
 ```
 $ glu current
 118 mg/dL (6.6 mmol/L) →  [IN RANGE]
