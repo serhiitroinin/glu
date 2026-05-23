@@ -1,6 +1,7 @@
 #!/usr/bin/env bun
 import { Command } from "commander";
 import { setSecret, getSecret, hasSecret } from "./lib/keychain.ts";
+import { importFromLuff } from "./lib/import-luff.ts";
 import * as out from "./lib/output.ts";
 import { libreProvider, login } from "./providers/libre.ts";
 import type { GlucoseProvider, TirAnalysis } from "./types.ts";
@@ -146,6 +147,34 @@ program
       console.log(`Token:   valid (${days} days remaining)`);
     }
     out.info("Credentials: macOS Keychain (service: glu)");
+  });
+
+program
+  .command("auth-import-from-luff")
+  .description("One-shot: copy LibreLinkUp auth from legacy luff-libre Keychain entry")
+  .addHelpText("after", `
+Details:
+  For users migrating from the older 'libre' CLI shipped via the luff
+  monorepo. Reads all credentials stored under the 'luff-libre' Keychain
+  service and copies them to 'glu'. Idempotent — re-run is safe.
+
+  The source entries are NOT deleted; remove them manually with:
+    security delete-generic-password -s luff-libre -a <account>
+
+Example:
+  glu auth-import-from-luff`)
+  .action(() => {
+    const { copied, missing } = importFromLuff();
+    if (copied.length === 0) {
+      out.error("No entries found under luff-libre. Nothing to import.");
+      process.exit(1);
+    }
+    out.success(`Imported ${copied.length} entries from luff-libre:`);
+    for (const k of copied) console.log(`  + ${k}`);
+    if (missing.length > 0) {
+      out.blank();
+      out.info(`Missing (not present in luff-libre): ${missing.join(", ")}`);
+    }
   });
 
 // ── Data commands ────────────────────────────────────────────────
