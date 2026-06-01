@@ -2,6 +2,7 @@
 import { Command } from "commander";
 import { setSecret, getSecret, hasSecret } from "./lib/keychain.ts";
 import { importFromLuff } from "./lib/import-luff.ts";
+import { readSecret } from "./lib/prompt.ts";
 import * as out from "./lib/output.ts";
 import { libreProvider, login } from "./providers/libre.ts";
 import type { GlucoseProvider, TirAnalysis } from "./types.ts";
@@ -41,7 +42,7 @@ function printTir(tir: TirAnalysis): void {
   console.log(`  Very High (>250):    ${tir.veryHighPct}%  (${tir.veryHigh}/${tir.readings})`);
   out.blank();
 
-  console.log("── Targets (consensus 2019) ─────────");
+  console.log("── Targets (personal) ───────────────");
   console.log(`  TIR ≥80%:  ${tirTarget(tir.tirPct, 80, "gte")}`);
   console.log(`  TBR <5%:   ${tirTarget(tir.tbrPct, 5, "lt")}`);
   console.log(`  CV <33%:   ${tirTarget(tir.cv, 33, "lt")}`);
@@ -106,9 +107,14 @@ EXAMPLES
 // ── Auth commands ────────────────────────────────────────────────
 
 program
-  .command("setup <email> <password>")
-  .description("Save LibreLinkUp credentials (stored in macOS Keychain)")
-  .action(async (email: string, password: string) => {
+  .command("setup <email>")
+  .description("Save LibreLinkUp credentials (password prompted securely; stored in macOS Keychain)")
+  .action(async (email: string) => {
+    const password = await readSecret("LibreLinkUp password: ");
+    if (!password) {
+      out.error("No password provided.");
+      process.exit(1);
+    }
     setSecret("email", email);
     setSecret("password", password);
     out.success("Credentials saved to Keychain.");

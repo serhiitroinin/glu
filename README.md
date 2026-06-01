@@ -2,7 +2,7 @@
 
 A terminal CLI for reading **FreeStyle Libre 3** continuous glucose monitor (CGM) data via the LibreLinkUp API.
 
-Outputs glucose readings, time-in-range analysis, CV, GMI, and consensus clinical targets — all from your shell.
+Outputs glucose readings, time-in-range analysis, CV, GMI, and configurable personal targets — all from your shell.
 
 ![demo](demo/demo.gif)
 
@@ -31,7 +31,7 @@ Readings:  144
   High      (181-250): 7.6%  (11/144)
   Very High (>250):    0%    (0/144)
 
-── Targets (consensus 2019) ─────────
+── Targets (personal) ───────────────
   TIR ≥80%:  ✓ PASS
   TBR <5%:   ✓ PASS
   CV <33%:   ✓ PASS
@@ -109,15 +109,17 @@ bun run src/cli.ts current
 | `181–250` | High | Hyperglycemia |
 | `>250` | Very high | Severe hyperglycemia |
 
-## Clinical targets
+## Targets
 
-Based on the [2019 international consensus on time in range](https://care.diabetesjournals.org/content/42/8/1593) (adults, non-pregnant):
+These are **personal targets** — deliberately stricter than the published clinical
+consensus. They are not the [2019 international consensus on time in
+range](https://care.diabetesjournals.org/content/42/8/1593), which recommends, for most
+non-pregnant adults, TIR >70%, TBR <4% (<1% below 54 mg/dL), TAR <25%, and CV ≤36%.
 
-| Metric | Target | Meaning |
+| Metric | Personal target | Meaning |
 |---|---|---|
 | TIR | ≥80% | Time 70–180 mg/dL |
 | TBR | <5% | Time <70 mg/dL |
-| TAR | <25% | Time >180 mg/dL |
 | CV | <33% | Glucose stability |
 | GMI | <6.8% | Estimated A1C |
 
