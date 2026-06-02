@@ -63,7 +63,7 @@ const program = new Command();
 program
   .name("glu")
   .description("FreeStyle Libre 3 CGM data CLI — glucose, TIR, and configurable targets")
-  .version("0.4.0")
+  .version("0.4.1")
   .addHelpText("after", `
 OVERVIEW
   Reads glucose data from a FreeStyle Libre sensor via the LibreLinkUp API.
