@@ -111,17 +111,34 @@ bun run src/cli.ts current
 
 ## Targets
 
-These are **personal targets** — deliberately stricter than the published clinical
-consensus. They are not the [2019 international consensus on time in
-range](https://care.diabetesjournals.org/content/42/8/1593), which recommends, for most
-non-pregnant adults, TIR >70%, TBR <4% (<1% below 54 mg/dL), TAR <25%, and CV ≤36%.
+Targets default to the [2019 International Consensus on Time in
+Range](https://care.diabetesjournals.org/content/42/8/1593) for non-pregnant adults with
+type 1 / type 2 diabetes. Run `glu targets` to see the effective values.
 
-| Metric | Personal target | Meaning |
+| Metric | Default (consensus) | Meaning |
 |---|---|---|
-| TIR | ≥80% | Time 70–180 mg/dL |
-| TBR | <5% | Time <70 mg/dL |
-| CV | <33% | Glucose stability |
-| GMI | <6.8% | Estimated A1C |
+| TIR | ≥70% | Time 70–180 mg/dL |
+| TBR | <4% | Time <70 mg/dL |
+| `<54` | <1% | Level-2 hypoglycemia |
+| TAR | <25% | Time >180 mg/dL |
+| `>250` | <5% | Level-2 hyperglycemia |
+| CV | ≤36% | Glucose stability |
+| GMI | <7% | Estimated A1C (no formal consensus; mirrors the A1C goal) |
+
+### Overriding targets
+
+Create `~/.config/glu/targets.json` and set any subset — the rest stay at the consensus
+default. For example, stricter personal goals:
+
+```json
+{
+  "tirMin": 80,
+  "cvMax": 33,
+  "gmiMax": 6.8
+}
+```
+
+Keys: `tirMin`, `tbrMax`, `tbrVeryLowMax`, `tarMax`, `tarVeryHighMax`, `cvMax`, `gmiMax`.
 
 ## Trend arrows
 

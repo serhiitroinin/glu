@@ -5,48 +5,57 @@ import { importFromLuff } from "./lib/import-luff.ts";
 import { readSecret } from "./lib/prompt.ts";
 import * as out from "./lib/output.ts";
 import { libreProvider, login } from "./providers/libre.ts";
+import { loadTargets, overriddenKeys, type Targets } from "./targets.ts";
+import { getModuleConfigPath } from "./lib/config.ts";
 import type { GlucoseProvider, TirAnalysis } from "./types.ts";
 
 const provider: GlucoseProvider = libreProvider;
 
 // ── Formatting helpers ───────────────────────────────────────────
 
-function tirCheck(value: number, target: number, op: "gte" | "lt"): string {
-  if (op === "gte") return value >= target ? " ✓" : "";
-  return value < target ? " ✓" : "";
+type Op = "gte" | "lt" | "lte";
+
+function passes(value: number, target: number, op: Op): boolean {
+  if (op === "gte") return value >= target;
+  if (op === "lte") return value <= target;
+  return value < target;
 }
 
-function tirTarget(value: number, target: number, op: "gte" | "lt"): string {
-  const pass = op === "gte" ? value >= target : value < target;
-  return pass ? `✓ PASS` : `✗ MISS (${value}%)`;
+function tirTarget(value: number, target: number, op: Op): string {
+  return passes(value, target, op) ? "✓ PASS" : `✗ MISS (${value}%)`;
 }
 
-function printTir(tir: TirAnalysis): void {
+function printTir(tir: TirAnalysis, targets: Targets = loadTargets()): void {
   out.info(`Readings:  ${tir.readings}`);
   out.blank();
 
   console.log("── Glucose ──────────────────────────");
   console.log(`  Mean:    ${tir.mean} mg/dL (${tir.meanMmol} mmol/L)`);
   console.log(`  SD:      ${tir.sd} mg/dL`);
-  console.log(`  CV:      ${tir.cv}%${tir.cv < 33 ? " ✓" : tir.cv < 36 ? " ⚠" : " ✗"}`);
+  console.log(`  CV:      ${tir.cv}%${passes(tir.cv, targets.cvMax, "lte") ? " ✓" : " ✗"}`);
   console.log(`  Min:     ${tir.min} mg/dL  Max: ${tir.max} mg/dL`);
   console.log(`  GMI:     ${tir.gmi}%`);
   out.blank();
 
   console.log("── Time in Range ────────────────────");
-  console.log(`  Very Low  (<54):     ${tir.veryLowPct}%  (${tir.veryLow}/${tir.readings})${tir.veryLow === 0 ? " ✓" : " ✗"}`);
+  console.log(`  Very Low  (<54):     ${tir.veryLowPct}%  (${tir.veryLow}/${tir.readings})${passes(tir.veryLowPct, targets.tbrVeryLowMax, "lt") ? " ✓" : " ✗"}`);
   console.log(`  Low       (54-69):   ${tir.lowPct}%  (${tir.low}/${tir.readings})`);
-  console.log(`  TBR total (<70):     ${tir.tbrPct}%${tirCheck(tir.tbrPct, 5, "lt")}`);
-  console.log(`  In Range  (70-180):  ${tir.tirPct}%  (${tir.inRange}/${tir.readings})${tir.tirPct >= 80 ? " ✓" : tir.tirPct >= 70 ? " ⚠" : " ✗"}`);
+  console.log(`  TBR total (<70):     ${tir.tbrPct}%${passes(tir.tbrPct, targets.tbrMax, "lt") ? " ✓" : " ✗"}`);
+  console.log(`  In Range  (70-180):  ${tir.tirPct}%  (${tir.inRange}/${tir.readings})${passes(tir.tirPct, targets.tirMin, "gte") ? " ✓" : " ✗"}`);
   console.log(`  High      (181-250): ${tir.highPct}%  (${tir.high}/${tir.readings})`);
   console.log(`  Very High (>250):    ${tir.veryHighPct}%  (${tir.veryHigh}/${tir.readings})`);
   out.blank();
 
-  console.log("── Targets (personal) ───────────────");
-  console.log(`  TIR ≥80%:  ${tirTarget(tir.tirPct, 80, "gte")}`);
-  console.log(`  TBR <5%:   ${tirTarget(tir.tbrPct, 5, "lt")}`);
-  console.log(`  CV <33%:   ${tirTarget(tir.cv, 33, "lt")}`);
-  console.log(`  GMI <6.8%: ${tirTarget(tir.gmi, 6.8, "lt")}`);
+  const overridden = overriddenKeys(targets);
+  const srcNote = overridden.length ? `${overridden.length} override${overridden.length === 1 ? "" : "s"}` : "2019 consensus";
+  console.log(`── Targets (${srcNote}) ─────────────`);
+  console.log(`  TIR  ≥${targets.tirMin}%:  ${tirTarget(tir.tirPct, targets.tirMin, "gte")}`);
+  console.log(`  TBR  <${targets.tbrMax}%:   ${tirTarget(tir.tbrPct, targets.tbrMax, "lt")}`);
+  console.log(`  <54  <${targets.tbrVeryLowMax}%:   ${tirTarget(tir.veryLowPct, targets.tbrVeryLowMax, "lt")}`);
+  console.log(`  TAR  <${targets.tarMax}%:  ${tirTarget(tir.tarPct, targets.tarMax, "lt")}`);
+  console.log(`  >250 <${targets.tarVeryHighMax}%:   ${tirTarget(tir.veryHighPct, targets.tarVeryHighMax, "lt")}`);
+  console.log(`  CV   ≤${targets.cvMax}%:  ${tirTarget(tir.cv, targets.cvMax, "lte")}`);
+  console.log(`  GMI  <${targets.gmiMax}%:   ${tirTarget(tir.gmi, targets.gmiMax, "lt")}`);
 }
 
 // ── Program ──────────────────────────────────────────────────────
@@ -54,8 +63,8 @@ function printTir(tir: TirAnalysis): void {
 const program = new Command();
 program
   .name("glu")
-  .description("FreeStyle Libre 3 CGM data CLI — glucose, TIR, and personal targets")
-  .version("0.2.1")
+  .description("FreeStyle Libre 3 CGM data CLI — glucose, TIR, and configurable targets")
+  .version("0.3.0")
   .addHelpText("after", `
 OVERVIEW
   Reads glucose data from a FreeStyle Libre sensor via the LibreLinkUp API.
@@ -85,12 +94,15 @@ GLUCOSE RANGES (mg/dL)
     181–250 High       — Hyperglycemia
     >250    Very high  — Severe hyperglycemia
 
-PERSONAL TARGETS (deliberately stricter than the 2019 consensus)
-    TIR ≥80%  Time in range (70–180 mg/dL)
-    TBR <5%   Time below range (<70 mg/dL)
-    TAR <25%  Time above range (>180 mg/dL)
-    CV  <33%  Coefficient of variation (glucose stability)
-    GMI <6.8% Glucose Management Indicator (estimated A1C)
+TARGETS (2019 consensus defaults — override in ~/.config/glu/targets.json)
+    TIR  ≥70%  Time in range (70–180 mg/dL)
+    TBR  <4%   Time below range (<70 mg/dL)
+    <54  <1%   Time in level-2 hypoglycemia
+    TAR  <25%  Time above range (>180 mg/dL)
+    >250 <5%   Time in level-2 hyperglycemia
+    CV   ≤36%  Coefficient of variation (glucose stability)
+    GMI  <7%   Glucose Management Indicator (estimated A1C)
+    Run 'glu targets' to see effective values and the config path.
 
 TREND ARROWS
     ↓↓ falling fast   ↓ falling   → stable   ↑ rising   ↑↑ rising fast
@@ -153,6 +165,40 @@ program
       console.log(`Token:   valid (${days} days remaining)`);
     }
     out.info("Credentials: macOS Keychain (service: glu)");
+  });
+
+program
+  .command("targets")
+  .description("Show effective glycemic targets and where to override them")
+  .addHelpText("after", `
+Details:
+  Targets default to the 2019 International Consensus on Time in Range.
+  Override any subset by creating ~/.config/glu/targets.json, e.g.:
+
+    {
+      "tirMin": 80,
+      "cvMax": 33,
+      "gmiMax": 6.8
+    }
+
+  Keys: tirMin, tbrMax, tbrVeryLowMax, tarMax, tarVeryHighMax, cvMax, gmiMax.
+  Only the keys you set are overridden; the rest stay at the consensus value.`)
+  .action(() => {
+    const targets = loadTargets();
+    const overridden = new Set(overriddenKeys(targets));
+    const tag = (k: keyof Targets) => (overridden.has(k) ? "  (override)" : "");
+    out.heading("Glycemic targets");
+    out.blank();
+    console.log(`  TIR  ≥ ${targets.tirMin}%${tag("tirMin")}`);
+    console.log(`  TBR  < ${targets.tbrMax}%${tag("tbrMax")}`);
+    console.log(`  <54  < ${targets.tbrVeryLowMax}%${tag("tbrVeryLowMax")}`);
+    console.log(`  TAR  < ${targets.tarMax}%${tag("tarMax")}`);
+    console.log(`  >250 < ${targets.tarVeryHighMax}%${tag("tarVeryHighMax")}`);
+    console.log(`  CV   ≤ ${targets.cvMax}%${tag("cvMax")}`);
+    console.log(`  GMI  < ${targets.gmiMax}%${tag("gmiMax")}`);
+    out.blank();
+    out.info(overridden.size ? `${overridden.size} override(s) active.` : "All values at 2019 consensus defaults.");
+    out.info(`Override file: ${getModuleConfigPath("targets")}`);
   });
 
 program
