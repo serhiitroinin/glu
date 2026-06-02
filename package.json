@@ -1,7 +1,7 @@
 {
   "name": "glu",
-  "version": "0.2.1",
-  "description": "FreeStyle Libre 3 CGM data CLI — glucose, TIR, and clinical targets via LibreLinkUp",
+  "version": "0.3.0",
+  "description": "FreeStyle Libre 3 CGM data CLI — glucose, TIR, and configurable targets via LibreLinkUp",
   "module": "src/cli.ts",
   "type": "module",
   "license": "MIT",
@@ -19,7 +19,7 @@
     "commander": "^14.0.3"
   },
   "devDependencies": {
-    "@types/bun": "latest",
+    "@types/bun": "^1.3.13",
     "typescript": "^5"
   }
 }

@@ -31,11 +31,14 @@ Readings:  144
   High      (181-250): 7.6%  (11/144)
   Very High (>250):    0%    (0/144)
 
-── Targets (personal) ───────────────
-  TIR ≥80%:  ✓ PASS
-  TBR <5%:   ✓ PASS
-  CV <33%:   ✓ PASS
-  GMI <6.8%: ✓ PASS
+── Targets (2019 consensus) ─────────
+  TIR  ≥70%:  ✓ PASS
+  TBR  <4%:   ✓ PASS
+  <54  <1%:   ✓ PASS
+  TAR  <25%:  ✓ PASS
+  >250 <5%:   ✓ PASS
+  CV   ≤36%:  ✓ PASS
+  GMI  <7%:   ✓ PASS
 ```
 
 ## Requirements
@@ -67,7 +70,7 @@ bun run src/cli.ts current
 3. Authenticate `glu`:
 
    ```bash
-   glu setup your@email.com YourLibreLinkUpPassword
+   glu setup your@email.com
    glu login
    ```
 
@@ -79,7 +82,7 @@ bun run src/cli.ts current
 
 | Command | Description |
 |---|---|
-| `glu setup <email> <password>` | Save LibreLinkUp credentials |
+| `glu setup <email>` | Save LibreLinkUp credentials |
 | `glu login` | Authenticate, follow region redirect, discover patient |
 | `glu status` | Show API region, patient name, token expiry |
 
