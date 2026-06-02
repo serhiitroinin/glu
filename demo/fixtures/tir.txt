@@ -17,8 +17,11 @@ Readings:  144
   High      (181-250): 4.9%   (7/144)
   Very High (>250):    0%     (0/144)
 
-── Targets (consensus 2019) ─────────
-  TIR ≥80%:  ✓ PASS
-  TBR <5%:   ✓ PASS
-  CV <33%:   ✓ PASS
-  GMI <6.8%: ✓ PASS
+── Targets (2019 consensus) ─────────────
+  TIR  ≥70%:  ✓ PASS
+  TBR  <4%:   ✓ PASS
+  <54  <1%:   ✓ PASS
+  TAR  <25%:  ✓ PASS
+  >250 <5%:   ✓ PASS
+  CV   ≤36%:  ✓ PASS
+  GMI  <7%:   ✓ PASS

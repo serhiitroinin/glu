@@ -44,7 +44,7 @@ Readings:  144
 ## Requirements
 
 - macOS (uses Keychain for credential storage)
-- [Bun](https://bun.sh) ≥ 1.0
+- [Bun](https://bun.sh) ≥ 1.3.9 — uses the native `Bun.secrets` keychain API
 - A FreeStyle Libre 3 sensor synced to a [LibreLinkUp](https://www.librelinkup.com) account with **sharing enabled**
 
 ## Install
