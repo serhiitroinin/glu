@@ -1,7 +1,6 @@
 #!/usr/bin/env bun
 import { Command } from "commander";
 import { setSecret, getSecret, hasSecret } from "./lib/keychain.ts";
-import { importFromLuff } from "./lib/import-luff.ts";
 import { readSecret } from "./lib/prompt.ts";
 import * as out from "./lib/output.ts";
 import { libreProvider, login } from "./providers/libre.ts";
@@ -64,7 +63,7 @@ const program = new Command();
 program
   .name("glu")
   .description("FreeStyle Libre 3 CGM data CLI — glucose, TIR, and configurable targets")
-  .version("0.3.0")
+  .version("0.4.0")
   .addHelpText("after", `
 OVERVIEW
   Reads glucose data from a FreeStyle Libre sensor via the LibreLinkUp API.
@@ -108,7 +107,7 @@ TREND ARROWS
     ↓↓ falling fast   ↓ falling   → stable   ↑ rising   ↑↑ rising fast
 
 EXAMPLES
-  glu setup user@example.com mypass    Save credentials
+  glu setup user@example.com           Save credentials (password prompted)
   glu login                            Authenticate + discover patient
   glu current                          What's my glucose right now?
   glu graph                            Last 12h table
@@ -127,8 +126,8 @@ program
       out.error("No password provided.");
       process.exit(1);
     }
-    setSecret("email", email);
-    setSecret("password", password);
+    await setSecret("email", email);
+    await setSecret("password", password);
     out.success("Credentials saved to Keychain.");
     out.info("Now run: glu login");
   });
@@ -143,15 +142,15 @@ program
 program
   .command("status")
   .description("Check connection status")
-  .action(() => {
-    if (!hasSecret("token")) {
+  .action(async () => {
+    if (!(await hasSecret("token"))) {
       out.info("Not logged in. Run: glu login");
       return;
     }
 
-    const url = getSecret("api-url") ?? "unknown";
-    const patient = getSecret("patient-name") ?? "unknown";
-    const expiresStr = getSecret("token-expires");
+    const url = (await getSecret("api-url")) ?? "unknown";
+    const patient = (await getSecret("patient-name")) ?? "unknown";
+    const expiresStr = await getSecret("token-expires");
     const expires = expiresStr ? parseInt(expiresStr, 10) : 0;
     const now = Math.floor(Date.now() / 1000);
 
@@ -199,34 +198,6 @@ Details:
     out.blank();
     out.info(overridden.size ? `${overridden.size} override(s) active.` : "All values at 2019 consensus defaults.");
     out.info(`Override file: ${getModuleConfigPath("targets")}`);
-  });
-
-program
-  .command("auth-import-from-luff")
-  .description("One-shot: copy LibreLinkUp auth from legacy luff-libre Keychain entry")
-  .addHelpText("after", `
-Details:
-  For users migrating from the older 'libre' CLI shipped via the luff
-  monorepo. Reads all credentials stored under the 'luff-libre' Keychain
-  service and copies them to 'glu'. Idempotent — re-run is safe.
-
-  The source entries are NOT deleted; remove them manually with:
-    security delete-generic-password -s luff-libre -a <account>
-
-Example:
-  glu auth-import-from-luff`)
-  .action(() => {
-    const { copied, missing } = importFromLuff();
-    if (copied.length === 0) {
-      out.error("No entries found under luff-libre. Nothing to import.");
-      process.exit(1);
-    }
-    out.success(`Imported ${copied.length} entries from luff-libre:`);
-    for (const k of copied) console.log(`  + ${k}`);
-    if (missing.length > 0) {
-      out.blank();
-      out.info(`Missing (not present in luff-libre): ${missing.join(", ")}`);
-    }
   });
 
 // ── Data commands ────────────────────────────────────────────────

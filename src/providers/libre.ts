@@ -59,20 +59,20 @@ interface RawGraphResponse {
 
 // ── Auth helpers ─────────────────────────────────────────────────
 
-function apiUrl(): string {
-  return getSecret("api-url") ?? DEFAULT_API_URL;
+async function apiUrl(): Promise<string> {
+  return (await getSecret("api-url")) ?? DEFAULT_API_URL;
 }
 
-function isTokenValid(): boolean {
-  const expires = getSecret("token-expires");
+async function isTokenValid(): Promise<boolean> {
+  const expires = await getSecret("token-expires");
   if (!expires) return false;
   return Date.now() / 1000 < parseInt(expires, 10);
 }
 
 async function login(quiet = false): Promise<void> {
-  const email = requireSecret("email");
-  const password = requireSecret("password");
-  let url = apiUrl();
+  const email = await requireSecret("email");
+  const password = await requireSecret("password");
+  let url = await apiUrl();
 
   // Login request
   let res = await fetch(`${url}/llu/auth/login`, {
@@ -89,7 +89,7 @@ async function login(quiet = false): Promise<void> {
       throw new Error(`Invalid region code from API: ${region}`);
     }
     url = `https://api-${region}.libreview.io`;
-    setSecret("api-url", url);
+    await setSecret("api-url", url);
     if (!quiet) console.log(`Redirecting to region: ${body.data.region}`);
 
     res = await fetch(`${url}/llu/auth/login`, {
@@ -134,12 +134,12 @@ async function login(quiet = false): Promise<void> {
   }
 
   // Save all session data to Keychain
-  setSecret("token", token);
-  setSecret("token-expires", String(expires));
-  setSecret("patient-id", patient.patientId);
-  setSecret("patient-name", `${patient.firstName} ${patient.lastName}`);
-  setSecret("account-hash", accountHash);
-  setSecret("api-url", url);
+  await setSecret("token", token);
+  await setSecret("token-expires", String(expires));
+  await setSecret("patient-id", patient.patientId);
+  await setSecret("patient-name", `${patient.firstName} ${patient.lastName}`);
+  await setSecret("account-hash", accountHash);
+  await setSecret("api-url", url);
 
   if (!quiet) {
     console.log(`Login successful! Connected to: ${patient.firstName} ${patient.lastName}`);
@@ -147,16 +147,16 @@ async function login(quiet = false): Promise<void> {
 }
 
 async function ensureAuth(): Promise<void> {
-  if (!isTokenValid()) {
+  if (!(await isTokenValid())) {
     await login(true);
   }
 }
 
 async function apiGet<T>(path: string): Promise<T> {
   await ensureAuth();
-  const token = requireSecret("token");
-  const accountHash = requireSecret("account-hash");
-  const url = apiUrl();
+  const token = await requireSecret("token");
+  const accountHash = await requireSecret("account-hash");
+  const url = await apiUrl();
 
   const res = await fetch(`${url}${path}`, {
     headers: {
@@ -218,7 +218,7 @@ export const libreProvider: GlucoseProvider = {
   },
 
   async graph() {
-    const patientId = requireSecret("patient-id");
+    const patientId = await requireSecret("patient-id");
     const body = await apiGet<RawGraphResponse>(`/llu/connections/${patientId}/graph`);
 
     const currentRaw = body.data?.connection?.glucoseMeasurement;
@@ -231,7 +231,7 @@ export const libreProvider: GlucoseProvider = {
   },
 
   async logbook() {
-    const patientId = requireSecret("patient-id");
+    const patientId = await requireSecret("patient-id");
     const body = await apiGet<{ data: RawGlucoseMeasurement[] }>(`/llu/connections/${patientId}/logbook`);
     return (body.data ?? [])
       .filter((r) => r.ValueInMgPerDl != null)
