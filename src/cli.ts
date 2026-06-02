@@ -54,8 +54,8 @@ function printTir(tir: TirAnalysis): void {
 const program = new Command();
 program
   .name("glu")
-  .description("FreeStyle Libre 3 CGM data CLI — glucose, TIR, and clinical targets")
-  .version("0.2.0")
+  .description("FreeStyle Libre 3 CGM data CLI — glucose, TIR, and personal targets")
+  .version("0.2.1")
   .addHelpText("after", `
 OVERVIEW
   Reads glucose data from a FreeStyle Libre sensor via the LibreLinkUp API.
@@ -64,7 +64,7 @@ OVERVIEW
 
 COMMAND CATEGORIES
   Auth:
-    setup <email> <pw>   Save LibreLinkUp credentials
+    setup <email>        Save LibreLinkUp credentials (password prompted)
     login                Authenticate + discover patient
     status               Check connection status
 
@@ -85,7 +85,7 @@ GLUCOSE RANGES (mg/dL)
     181–250 High       — Hyperglycemia
     >250    Very high  — Severe hyperglycemia
 
-CLINICAL TARGETS (consensus 2019, adults non-pregnant)
+PERSONAL TARGETS (deliberately stricter than the 2019 consensus)
     TIR ≥80%  Time in range (70–180 mg/dL)
     TBR <5%   Time below range (<70 mg/dL)
     TAR <25%  Time above range (>180 mg/dL)
